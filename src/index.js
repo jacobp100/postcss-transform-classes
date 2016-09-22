@@ -5,10 +5,10 @@ import postcss from 'postcss';
 import selectorParser from 'postcss-selector-parser';
 
 
-export default postcss.plugin('transform-classes', ({
+export const transformClassNames = ({
   transform = identity,
   allowConflicts = false,
-} = {}) => (root) => {
+} = {}, root) => {
   const transformedToOriginalValue = {};
 
   const transformClassNode = classNode => {
@@ -33,4 +33,10 @@ export default postcss.plugin('transform-classes', ({
   root.walkRules(rule => {
     rule.selectors = rule.selectors.map(transformSelector);
   });
-});
+};
+
+
+export default postcss.plugin(
+  'transform-classes',
+  (options) => (root) => transformClassNames(options, root)
+);

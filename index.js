@@ -3,6 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.transformClassNames = undefined;
 
 var _fp = require('lodash/fp');
 
@@ -16,37 +17,43 @@ var _postcssSelectorParser2 = _interopRequireDefault(_postcssSelectorParser);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-exports.default = _postcss2.default.plugin('transform-classes', function () {
+var transformClassNames = exports.transformClassNames = function transformClassNames() {
   var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
   var _ref$transform = _ref.transform;
   var transform = _ref$transform === undefined ? _fp.identity : _ref$transform;
   var _ref$allowConflicts = _ref.allowConflicts;
   var allowConflicts = _ref$allowConflicts === undefined ? false : _ref$allowConflicts;
-  return function (root) {
-    var transformedToOriginalValue = {};
+  var root = arguments[1];
 
-    var transformClassNode = function transformClassNode(classNode) {
-      var value = classNode.value;
+  var transformedToOriginalValue = {};
 
-      var transformedClassName = transform(value);
+  var transformClassNode = function transformClassNode(classNode) {
+    var value = classNode.value;
 
-      if (!allowConflicts && transformedClassName in transformedToOriginalValue && transformedToOriginalValue[transformedClassName] !== value) {
-        throw new Error('Expected ' + value + ' to produce a consistent result');
-      }
+    var transformedClassName = transform(value);
 
-      transformedToOriginalValue[transformedClassName] = value;
-      classNode.value = transformedClassName;
-    };
+    if (!allowConflicts && transformedClassName in transformedToOriginalValue && transformedToOriginalValue[transformedClassName] !== value) {
+      throw new Error('Expected ' + value + ' to produce a consistent result');
+    }
 
-    var transformSelector = function transformSelector(selector) {
-      return (0, _postcssSelectorParser2.default)(function (node) {
-        node.walkClasses(transformClassNode);
-      }).process(selector).result;
-    };
-
-    root.walkRules(function (rule) {
-      rule.selectors = rule.selectors.map(transformSelector);
-    });
+    transformedToOriginalValue[transformedClassName] = value;
+    classNode.value = transformedClassName;
   };
-}); /* eslint no-param-reassign: [0] */
+
+  var transformSelector = function transformSelector(selector) {
+    return (0, _postcssSelectorParser2.default)(function (node) {
+      node.walkClasses(transformClassNode);
+    }).process(selector).result;
+  };
+
+  root.walkRules(function (rule) {
+    rule.selectors = rule.selectors.map(transformSelector);
+  });
+}; /* eslint no-param-reassign: [0] */
+
+exports.default = _postcss2.default.plugin('transform-classes', function (options) {
+  return function (root) {
+    return transformClassNames(options, root);
+  };
+});
